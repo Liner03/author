@@ -58,6 +58,7 @@ jobs:
         run: npx electron-builder --win --publish never
 
       - name: Generate release notes
+        if: startsWith(github.ref, 'refs/tags/v')
         id: notes
         shell: bash
         run: |
@@ -111,6 +112,7 @@ jobs:
           fi
 
       - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: Author ${{ github.ref_name }} — ${{ steps.notes.outputs.title_desc }}
