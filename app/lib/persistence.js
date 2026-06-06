@@ -176,6 +176,36 @@ const LOCALSTORAGE_KEYS = new Set([
     'author-delete-skip-today',
 ]);
 
+// 这些键属于当前设备/当前用户的本地偏好，不应随存档切换被清空或覆盖。
+const MACHINE_LOCAL_KEYS = new Set([
+    'author-api-config',
+    'author-api-profiles',
+    'author-theme',
+    'author-lang',
+    'author-visual',
+    'author-writing-background',
+    'author-delete-never-remind',
+    'author-delete-skip-today',
+    'author-sidebar-push',
+    'author-ai-sidebar-push',
+    'author-toolbar-collapsed',
+    'author-font-size',
+    'author-line-height',
+    'author-margins',
+    'author-pinned-categories',
+    'author-update-dismissed',
+    'author-debug',
+]);
+
+function snapshotLocalStorage(keys) {
+    const snapshot = {};
+    for (const key of keys) {
+        const value = localStorage.getItem(key);
+        if (value !== null) snapshot[key] = value;
+    }
+    return snapshot;
+}
+
 async function browserGet(key) {
     if (LOCALSTORAGE_KEYS.has(key)) {
         const raw = localStorage.getItem(key);
@@ -236,6 +266,8 @@ export async function clearBrowserCache() {
 export async function restoreBrowserFromSaveData(browserData) {
     if (typeof window === 'undefined') return;
 
+    const preservedLocalState = snapshotLocalStorage(MACHINE_LOCAL_KEYS);
+
     // 1. 清空 IndexedDB
     await clear();
 
@@ -248,10 +280,16 @@ export async function restoreBrowserFromSaveData(browserData) {
     keysToRemove.forEach(k => localStorage.removeItem(k));
 
     // 3. 保留主题/语言等 UI 配置（它们不在存档里）
-    // 这些在上面已被清除，但 browserData 中如果有就写入，没有就用默认
+    // 这些在上面已被清除，这里恢复当前设备上的本地偏好
+    for (const [key, value] of Object.entries(preservedLocalState)) {
+        localStorage.setItem(key, value);
+    }
 
     // 4. 把存档数据写入对应的浏览器存储
     for (const [key, value] of Object.entries(browserData)) {
+        if (MACHINE_LOCAL_KEYS.has(key)) {
+            continue;
+        }
         if (LOCALSTORAGE_KEYS.has(key)) {
             localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
         } else {
