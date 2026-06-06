@@ -1,6 +1,6 @@
 {
   "name": "author-app",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -70,7 +70,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "mleafish",
+        "owner": "Liner03",
         "repo": "author"
       }
     ],
